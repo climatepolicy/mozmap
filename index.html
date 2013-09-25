@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+.district{
+	fill:none;
+	stroke:white;
+}
+.province{
+	opacity:0.5;
+	stroke:none;
+}
+
+.province-label {
+  font-family: Helvetica;
+  font-size: 20px;
+  font-weight: 300;
+  text-anchor: middle;
+}
+</style>
+<body>
+	<div id = "mozmap"></div>
+	<script src="http://d3js.org/d3.v3.min.js"></script>
+	<script src="http://d3js.org/topojson.v1.min.js"></script>
+	<script>
+	
+	var width = 960,
+    height = 1160,
+    z = d3.scale.category10();
+    
+var projection = d3.geo.mercator()
+    .scale(2000)
+    .translate([-1000, -300]);
+
+var path = d3.geo.path()
+    .projection(projection);
+
+var svg = d3.select("#mozmap").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+    
+
+d3.json("moz.json", function(error, moz) {
+  	
+ //draw provinces          
+  var provinces = svg.selectAll("path")
+    .data(topojson.feature(moz, moz.objects.provinces).features);
+    
+  provinces.enter().append("path")
+    .attr("d", path)
+    .attr("class", "province")
+    .style("fill", function(d){return z(d.properties.pid);})
+	.on("mouseover", mouseOver)
+	.on("mouseout", mouseOut);
+	
+  function mouseOver(){
+  	d3.select(this).style("opacity","1");
+  }
+  
+  function mouseOut(){
+  	d3.select(this).style("opacity","0.5");	
+  }
+    
+  //add district boundaries 
+  svg.selectAll("path")
+  	.data(topojson.feature(moz, moz.objects.districts).features)
+  .enter().append("path")
+    .attr("d", path)
+    .attr("class", "district");
+    
+  //add province labels
+  provinces.enter().append("text")
+    .attr("class", "province-label")
+    .attr("transform", function(d) { return "translate(" + path.centroid(d) + ") rotate(330)"; })
+    .attr("dy", ".35em")
+    .text(function(d) { return d.properties.pname; });
+  
+
+});
+	
+	</script>
+
+</body>
+</html>
